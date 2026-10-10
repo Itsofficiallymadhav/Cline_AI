@@ -1,0 +1,84 @@
+"""All user-facing text per language. Short sentences, plain words, no legal jargon, always say 'estimate'.
+Add a language: add a dict here + its code in config.SUPPORTED_LANGS. Have a native speaker review translations.
+"""
+from src.config import DEFAULT_LANG
+
+M: dict[str, dict[str, str]] = {
+"en": {
+ "welcome": "Hello! I am KaamKaHisab. I help check delayed MNREGA wages.\nPlease choose your language.",
+ "reply_number": "Reply with the number.",
+ "ask_job_card": "Please say or type your job card number (digits only).",
+ "no_job_card": "I could not understand the number. Please say or type your job card number (digits only).",
+ "confirm_job_card": "I heard job card number {jc}. Is this correct?",
+ "yes": "Yes, correct", "no": "No, try again",
+ "retry_audio": "Sorry, I could not hear that clearly. Please type it, or send the voice note again.",
+ "not_found": "No record found for job card {jc}. Please check the number and try again.",
+ "result_delayed": "{name}, your wages of ₹{wage} were paid {days} days late. You may be eligible for about ₹{comp} extra compensation. This is only an estimate; an officer will confirm.",
+ "result_unpaid": "{name}, your wages of ₹{wage} are not paid yet and are {days} days late. About ₹{comp} compensation may be due so far. This is only an estimate.",
+ "result_on_time": "{name}, your wages were paid on time (or are not due yet). No delay found.",
+ "result_review": "{name}, your record needs checking by an officer: {flags}. So I cannot work out any compensation. Please contact your Gram Panchayat.",
+ "flag_missing_closure_date": "muster roll closing date is missing",
+ "flag_missing_wage_data": "wage details are incomplete",
+ "flag_days_mismatch": "days worked and days paid are different",
+ "flag_wage_rate_mismatch": "amount paid does not match the wage rate",
+ "flag_failed_transaction": "the payment failed",
+ "btn_calc": "See calculation", "btn_draft": "Make complaint", "btn_cancel": "Cancel",
+ "btn_approve": "YES - approve complaint", "btn_edit": "Edit complaint",
+ "calc": "Calculation:\nMuster roll closed: {closed}\nPayment due by: {due}\nPaid on: {paid}\nDelay: {days} days\nFormula: {formula}\nThis is an estimate, not a legal decision.",
+ "not_paid": "not paid yet",
+ "no_calc": "No compensation could be calculated for this record.",
+ "no_draft_needed": "No delay amount was found for your record, so a complaint cannot be made here.",
+ "draft_intro": "This is your complaint draft. Please read it:",
+ "complaint": "To,\nProgramme Officer / Gram Panchayat\n\nSubject: Delay in MNREGA wage payment\n\nI am {name}, job card no. {jc}, village {village}. My wages of ₹{wage} were due by {due}. Payment status: {paid} ({days} days late). As per the rules I may be eligible for about ₹{comp} compensation. Please check and take action.\n\nYours sincerely,\n{name}\n\n(Auto-generated draft. Needs verification by an officer.)",
+ "edit_prompt": "Please type or say your new complaint text.",
+ "approved": "Your complaint is saved. Case number: {case_id}. Status: {status}. It is NOT yet filed on any government portal; please give it to your Gram Panchayat.",
+ "status_none": "You have no cases yet.",
+ "status_head": "Your cases:",
+ "status_line": "{case_id} - job card {jc} - ₹{comp} - {status}",
+ "st_READY_FOR_HANDOFF": "ready to hand over",
+ "cancelled": "OK, cancelled. Say 'hi' to start again.",
+ "fallback": "I did not understand. Please reply with a number from the list.",
+},
+"hi": {
+ "welcome": "नमस्ते! मैं कामकाहिसाब हूँ। मैं मनरेगा मज़दूरी में देरी जाँचने में मदद करता हूँ।\nकृपया अपनी भाषा चुनें।",
+ "reply_number": "नंबर भेजकर जवाब दें।",
+ "ask_job_card": "कृपया अपना जॉब कार्ड नंबर बोलें या लिखें (सिर्फ़ अंक)।",
+ "no_job_card": "मुझे नंबर समझ नहीं आया। कृपया जॉब कार्ड नंबर (सिर्फ़ अंक) बोलें या लिखें।",
+ "confirm_job_card": "मैंने जॉब कार्ड नंबर {jc} सुना। क्या यह सही है?",
+ "yes": "हाँ, सही है", "no": "नहीं, फिर से",
+ "retry_audio": "माफ़ कीजिए, आवाज़ साफ़ नहीं आई। कृपया लिखकर भेजें या दोबारा बोलें।",
+ "not_found": "जॉब कार्ड {jc} का रिकॉर्ड नहीं मिला। कृपया नंबर जाँचकर फिर से बताएं।",
+ "result_delayed": "{name}, आपकी मज़दूरी ₹{wage} का भुगतान {days} दिन देर से हुआ। आपको लगभग ₹{comp} अतिरिक्त मुआवज़ा मिल सकता है। यह सिर्फ़ अनुमान है, अधिकारी इसकी पुष्टि करेंगे।",
+ "result_unpaid": "{name}, आपकी मज़दूरी ₹{wage} अभी तक नहीं मिली और {days} दिन की देरी हो चुकी है। अब तक लगभग ₹{comp} मुआवज़ा बन सकता है। यह सिर्फ़ अनुमान है।",
+ "result_on_time": "{name}, आपकी मज़दूरी समय पर मिल गई थी (या अभी देय नहीं है)। कोई देरी नहीं मिली।",
+ "result_review": "{name}, आपके रिकॉर्ड की अधिकारी द्वारा जाँच ज़रूरी है: {flags}। इसलिए मैं मुआवज़ा नहीं निकाल सकता। कृपया अपनी ग्राम पंचायत से संपर्क करें।",
+ "flag_missing_closure_date": "मस्टर रोल बंद होने की तारीख नहीं मिली",
+ "flag_missing_wage_data": "मज़दूरी की जानकारी अधूरी है",
+ "flag_days_mismatch": "काम के दिन और भुगतान के दिन अलग हैं",
+ "flag_wage_rate_mismatch": "भुगतान की राशि मज़दूरी दर से मेल नहीं खाती",
+ "flag_failed_transaction": "भुगतान असफल रहा",
+ "btn_calc": "हिसाब देखें", "btn_draft": "शिकायत बनाएं", "btn_cancel": "रद्द करें",
+ "btn_approve": "हाँ (YES) - शिकायत मंज़ूर", "btn_edit": "शिकायत बदलें",
+ "calc": "हिसाब:\nमस्टर रोल बंद: {closed}\nभुगतान की अंतिम तारीख: {due}\nभुगतान की तारीख: {paid}\nदेरी: {days} दिन\nसूत्र: {formula}\nयह अनुमान है, कानूनी फ़ैसला नहीं।",
+ "not_paid": "अभी तक नहीं",
+ "no_calc": "इस रिकॉर्ड के लिए कोई मुआवज़ा नहीं निकाला जा सका।",
+ "no_draft_needed": "आपके रिकॉर्ड में मुआवज़े की कोई राशि नहीं निकली, इसलिए यहाँ शिकायत नहीं बन सकती।",
+ "draft_intro": "यह आपकी शिकायत का मसौदा है। कृपया पढ़ें:",
+ "complaint": "सेवा में,\nकार्यक्रम अधिकारी / ग्राम पंचायत\n\nविषय: मनरेगा मज़दूरी भुगतान में देरी\n\nमैं {name}, जॉब कार्ड नंबर {jc}, गाँव {village}। मेरी मज़दूरी ₹{wage} का भुगतान {due} तक होना था। भुगतान की स्थिति: {paid} ({days} दिन की देरी)। नियमों के अनुसार मुझे लगभग ₹{comp} मुआवज़ा मिल सकता है। कृपया जाँच करके कार्रवाई करें।\n\nभवदीय,\n{name}\n\n(यह अपने-आप बना मसौदा है। अधिकारी द्वारा जाँच ज़रूरी है।)",
+ "edit_prompt": "कृपया अपनी नई शिकायत लिखें या बोलें।",
+ "approved": "आपकी शिकायत सहेज ली गई है। केस नंबर: {case_id}। स्थिति: {status}। यह अभी किसी सरकारी पोर्टल पर दर्ज नहीं हुई है; कृपया इसे अपनी ग्राम पंचायत को दें।",
+ "status_none": "आपका अभी कोई केस नहीं है।",
+ "status_head": "आपके केस:",
+ "status_line": "{case_id} - जॉब कार्ड {jc} - ₹{comp} - {status}",
+ "st_READY_FOR_HANDOFF": "सौंपने के लिए तैयार",
+ "cancelled": "ठीक है, रद्द किया। फिर से शुरू करने के लिए 'नमस्ते' लिखें।",
+ "fallback": "समझ नहीं आया। कृपया सूची में से कोई नंबर भेजें।",
+},
+}
+
+LANG_OPTIONS = [("lang:hi", "हिन्दी"), ("lang:en", "English")]   # native-script labels; extend with more
+
+
+def t(lang, key: str, **kw) -> str:
+    tpl = M.get(lang or DEFAULT_LANG, {}).get(key) or M[DEFAULT_LANG].get(key) or key
+    return tpl.format(**kw) if kw else tpl

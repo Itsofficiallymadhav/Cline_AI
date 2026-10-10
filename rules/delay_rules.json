@@ -1,0 +1,7 @@
+{
+  "due_days": 15,
+  "rate_per_day": 0.0005,
+  "source": "ILLUSTRATIVE prototype values. Replace with the official MGNREGA rule text/URL.",
+  "last_verified": null,
+  "note": "Set last_verified to a date ONLY after a team member confirms due_days, rate and the day-counting convention against an official worked example."
+}

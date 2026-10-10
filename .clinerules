@@ -1,0 +1,15 @@
+# KaamKaHisab - standing rules for Cline (read SPEC.md first)
+
+- Never auto-submit anything. Every complaint needs explicit user approval (option 1 / YES) before it is saved.
+- The calculator (src/engine) contains NO LLM calls, NO network, and no imports from src/ai. It is fully unit-tested.
+- The LLM may only extract fields and phrase text. It must never calculate or invent amounts, dates, or legal rules.
+  Any LLM text shown to a user must pass src.ai.explain.is_grounded(); otherwise use the template.
+- Uncertain or conflicting data => status needs_review and NO amount.
+- All demo data is synthetic and clearly fictional. Never commit secrets; read keys from .env (see .env.example).
+- Legal parameters live only in rules/delay_rules.json. Never hard-code due days or rates.
+- Keep functions channel-agnostic: handle_message(user_id, text=None, audio_bytes=None) -> Reply. No provider code in src/channel/flow.py.
+- Contracts live in src/engine/models.py. Do not rename fields without updating SPEC.md and telling the team.
+- Only edit files you own (see SPEC.md "Ownership"). Make small changes, run `python -m pytest -q` after each, and explain what changed.
+- Do not weaken or delete acceptance tests to make code pass; fix the code.
+- Add short Hindi/English user text only in src/messages.py. Keep sentences short, plain words, always say "estimate".
+- Add an entry to CLINE_LOG.md after each accepted Cline task.
