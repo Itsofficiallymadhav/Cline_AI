@@ -75,7 +75,7 @@ KaamSathi aims to provide that assistance without pretending to replace official
 
 ## 2. Our Solution
 
-KaamSathi provides a guided, conversational experience through a web application.
+KaamSathi provides a guided, conversational experience through web application.
 
 A worker can describe a wage-payment problem in ordinary language. The system collects the necessary information, identifies missing details, validates the available data, calculates an illustrative estimate when possible, and generates a complaint draft for review.
 
