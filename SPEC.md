@@ -26,12 +26,23 @@ The app runs with **no API keys** (templates + regex + sample data). Keys only i
 - `Status`: on_time | delayed | unpaid_overdue | needs_review | not_found
 - `Flag`: missing_closure_date | missing_wage_data | days_mismatch | wage_rate_mismatch | failed_transaction
 - `Reply`: text, options[{id,label}], hint; `render()` appends the numbered list. `ExtractedFields`: job_card, work_period, issue_type. `Case`: case_id, user_id, job_card_no, status, complaint_text, compensation, created_at
-- Adapter: `get_records(job_card) -> list[WorkerRecord]` (empty list if unknown). Rules file: `rules/delay_rules.json {due_days, rate_per_day, source, last_verified, note}`.
+- Adapter: `get_records(job_card) -> list[WorkerRecord]` (empty list if unknown). Rules file: `rules/delay_rules.json {due_days, rate_per_day, source, last_verified, note}` plus optional metadata
+  (`src/engine/rules.py`): `scheme`, `version`, `effective_from`, `effective_to` (closure dates outside this window are not
+  covered), `delay_start_offset_days` (default 0), `synthetic_demo` (true ONLY for clearly labelled demo rules).
 
 ## 4. Engine rules
 - `due_date = muster_roll_closed_on + due_days`; `delay_days = max(0, (payment_date or today) - due_date)`; `compensation = wage_amount x rate_per_day x delay_days` (Decimal, 2 dp, half-up); `wage_amount = days_worked x daily_wage_rate`.
 - Any flag => `needs_review`, `compensation = None`. Unpaid & not yet due => `on_time`.
+- Missing, conflicting or non-finite inputs (e.g. partial/pending payment with a payment date) => `needs_review`, no amount.
+- **Rule gating (as implemented in `src/engine/calculator.py`):**
+  - `last_verified` set => amounts are calculated normally.
+  - `last_verified` empty AND `synthetic_demo: true` => amounts are calculated for the demo; the disclaimer says
+    "Rule values not yet verified." and "Synthetic demo data and demo rule; not a real claim."
+  - `last_verified` empty AND not `synthetic_demo` => `needs_review`, **no amount** (an unverified real rule is never applied).
+  - Closure date outside `effective_from`/`effective_to` => `needs_review`, no amount.
 - **VERIFY BEFORE TRUSTING (T1+T4, 15 min):** due_days, rate and the day-counting convention against an official worked example. Then set `last_verified` in the rules file. Until then results carry "Rule values not yet verified."
+- The shipped `rules/delay_rules.json` is `DEMO_ILLUSTRATIVE`, `synthetic_demo: true`, `last_verified: null`. Chat users see the
+  translated notes `rule_unverified` / `demo_rule` from `src/messages.py`; the engine's English `disclaimer` is unchanged.
 - Demo example (illustrative): 20 days x Rs 300 = Rs 6,000, paid 12 days late: 6000 x 0.0005 x 12 = **Rs 36**.
 
 ## 5. Conversation flow (numbered replies; YES/NO/STATUS/CANCEL words also work)
@@ -42,14 +53,17 @@ Failures: unknown job card -> ask again; bad/failed voice -> ask to type; garbag
 
 ## 6. Acceptance tests (tests/)
 `test_calculator.py` (on-time, 1/8/40 days, unpaid, not-yet-due, missing date, days mismatch, rate mismatch, failed txn, demo=36, rules disclosure, no-LLM) -
-`test_adapter.py` - `test_ai.py` (extraction incl. Devanagari digits, grounding, LLM mocked) - `test_flow.py` (full journeys en/hi, edit, cancel, voice, isolation) - `test_webhook.py`.
+`test_calculator_safety.py` (rule gating, demo rule, effective dates, non-finite / conflicting inputs) -
+`test_adapter.py` - `test_ai.py` (extraction incl. Devanagari digits, grounding, LLM mocked) - `test_ai_unit.py` (AI layer unit tests:
+grounding, rewrite checks, complaint eligibility; offline) - `test_flow.py` (full journeys en/hi, edit, cancel, voice, isolation) -
+`test_webhook.py` - `test_integration_regressions.py` (messages keys in all languages, voice note without keys, Hindi calc view).
 Definition of done: `python -m pytest -q` is green, the simulator completes the journey, and the Twilio sandbox completes it on a real phone.
 
 ## 7. Ownership (one owner per file avoids merge conflicts)
 | Owner | Files |
 |---|---|
-| T1 Backend/engine | src/engine/calculator.py, src/adapters/sample.py, data/sample_records.json, rules/delay_rules.json, tests/test_calculator.py, tests/test_adapter.py |
-| T2 AI/language | src/ai/*, src/messages.py (translations), tests/test_ai.py |
+| T1 Backend/engine | src/engine/calculator.py, src/adapters/sample.py, data/sample_records.json, rules/delay_rules.json, tests/test_calculator.py, tests/test_calculator_safety.py, tests/test_adapter.py |
+| T2 AI/language | src/ai/*, src/messages.py (translations), tests/test_ai.py, tests/test_ai_unit.py |
 | T3 Conversation/channels | src/channel/flow.py, store.py, simulator_app.py, twilio_webhook.py, tests/test_flow.py, tests/test_webhook.py |
-| T4 Integration/submission | SPEC.md, .clinerules, CLINE_LOG.md, README.md, src/main.py, requirements, repo/CI, demo video, PPT |
-Shared (change only by agreement): src/engine/models.py, src/config.py.
+| T4 Integration/submission | SPEC.md, .clinerules, CLINE_LOG.md, README.md, src/main.py, requirements, repo/CI, tests/test_integration_regressions.py, demo video, PPT |
+Shared (change only by agreement): src/engine/models.py, src/engine/rules.py (rule metadata; T1 is the main user), src/config.py.

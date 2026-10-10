@@ -6,6 +6,9 @@ Add one entry per Cline task you accept. Keep it honest: what you asked, what th
 |---|-----|------|----------------|-----------------------|-----------------------|--------|
 | 1 | T1 | Plan -> Act | Implement calculator.py ... | e.g. asked it to use Decimal | 14 failing -> 0 failing | abc123 |
 | 2 | T1 | Plan -> Act | Finalize calculator spec in Plan Mode, then implement calculator + SampleAdapter + rule metadata | Human approved 9 decisions: non-strict only for labelled synthetic demo rule; unverified/inapplicable rule => NEEDS_REVIEW; configurable but unverified delay offset; partial/failed/unknown-status/missing-date/conflicting-date => NEEDS_REVIEW; no model or flag changes; Decimal internally; no test weakened; synthetic data only; local only | Baseline not run before edits (no deps installed). After: `tests/test_calculator.py` + `tests/test_adapter.py` + new `tests/test_calculator_safety.py` = 38 passed. Full run (minimal venv): 38 passed, 11 failed (`tests/test_flow.py`, T3 stub `NotImplementedError`), `tests/test_ai.py` and `tests/test_webhook.py` not collected (`httpx`/`fastapi` not installed in that venv) | not committed (local only) |
+| 9 | T4 (integrator) | Plan -> Act | Audit origin/main, then fix channel texts, Hindi calc view, voice notes without keys, simulator labels; add regression tests | Phase 0 (fetch/merge) cancelled by human: main already integrated; madhav skipped. Human approved decisions A-E | 257 passed -> 260 passed (3 new tests, none changed) | 6d7f6f3 |
+| 10 | T4 (integrator) | Act | Gemini default model, fmt_money exponent fix, llm multi-part reply, .gitignore / untrack .DS_Store | gemini-2.0-flash is shut down per Google's models page; pinned gemini-3.8-flash (not tested live) | 260 passed -> 260 passed | 6e6e638 |
+| 11 | T4 (integrator) | Act | SPEC.md rule gating + test list + rules.py ownership; README optional keys + demo date | Decision B: document the stricter engine behaviour, no code change | 260 passed -> 260 passed | see git log |
 
 ### Entry 2 details (what actually happened)
 - Files changed: `src/engine/calculator.py` (Decimal calculator), `src/adapters/sample.py` (SampleAdapter), `src/engine/rules.py` (optional fields: scheme, version, effective_from/to, delay_start_offset_days, synthetic_demo), `rules/delay_rules.json` (labelled DEMO_ILLUSTRATIVE, `synthetic_demo: true`, `last_verified` still `null`), new `tests/test_calculator_safety.py`. `models.py`, flags and existing tests untouched.
@@ -103,6 +106,13 @@ Add one entry per Cline task you accept. Keep it honest: what you asked, what th
 - `src/adapters/sample.py`: Madhav's area. Not modified in this step and not committed.
 - This log is shared / T4-owned and conflicts with Madhav's row 2 on `origin/madhav`. Coordinate with T4 before this log change is committed; do not overwrite his entry.
 
+### Entries 9-11 - 2026-10-10 - Integration pass on `main` (T4, Plan -> Act)
+- Start: `main` = `origin/main` = `844faff`, clean tree, 257 passed. Phase 0 (fetch/merge) cancelled by the human; `madhav` skipped (its `sample.py` is already on main; its row 2 is kept on that branch).
+- Entry 9 (`6d7f6f3`): `service_error`, `approve_by_typing`, `unsupported_media`, `voice_unavailable`, `rule_unverified`, `demo_rule`, `st_*`, `rs_*` keys added to `src/messages.py` (en + hi); `flow.py` `_LOCAL_TEXT` and `twilio_webhook.py` `_UNSUPPORTED_MEDIA` removed; calc view shows translated rule notes; voice notes without `GROQ_API_KEY` or Twilio REST credentials get an immediate "please type" reply; simulator shows labels instead of raw codes; warning when the auth token is set without `PUBLIC_BASE_URL`. New `tests/test_integration_regressions.py` (3 tests).
+- Entry 10 (`6e6e638`): `GEMINI_MODEL` default `gemini-3.8-flash`; `fmt_money` never prints `1e+06` (`explain._money` kept as an alias, `complaint.py` imports `fmt_money`); `llm.py` joins all text parts; `.venv/` + `.DS_Store` ignored, `.DS_Store` untracked.
+- Entry 11: SPEC.md section 3/4/6/7 and README updated (docs only).
+- Not changed: calculator, rules file, models, any existing test. Hindi wording of the new keys needs a native speaker's check. No live API calls were made. Not pushed.
+- Open: `tests/test_calculator_safety.py` line 2 and Entries 7-8 mention `docs/handoff_adapter_tests_for_T1_adapter_owner.md`, which is not in the repo.
 
 ## Screen recordings to capture
 - [ ] First Plan Mode session (Cline proposes the plan, you correct it)
