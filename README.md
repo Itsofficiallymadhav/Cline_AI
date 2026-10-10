@@ -26,4 +26,4 @@ The project structure and implementation details will be documented as developme
 - Expand features and documentation.
 
 ## Author
-Its officially madhav
+Clineliness
