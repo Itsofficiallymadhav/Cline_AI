@@ -21,6 +21,7 @@ def amounts_in(text: str) -> set[float]:
 
 
 def fmt_money(x) -> str:
+    """36.0 -> '36', 1.5 -> '1.50', 1000000.0 -> '1000000' (never exponent notation)."""
     if x is None:
         return "-"
-    return f"{x:g}" if float(x).is_integer() else f"{x:.2f}"
+    return f"{float(x):.0f}" if float(x).is_integer() else f"{float(x):.2f}"

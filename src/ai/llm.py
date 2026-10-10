@@ -1,5 +1,6 @@
 """Thin LLM wrapper (Gemini free tier). Returns None when no key / any failure, so callers ALWAYS have a fallback.
-Tests monkeypatch complete_text / complete_json. STARTER: not verified against the live API."""
+Tests monkeypatch complete_text / complete_json. Request/response shape follows Google's generateContent docs;
+not yet exercised against the live API from this repo (see README "Optional keys" for a one-line live check)."""
 from __future__ import annotations
 import json
 from typing import Optional
@@ -22,7 +23,9 @@ def complete_text(prompt: str, json_mode: bool = False) -> Optional[str]:
             timeout=30,
         )
         r.raise_for_status()
-        return r.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
+        parts = r.json()["candidates"][0]["content"]["parts"]
+        text = "".join(p.get("text", "") for p in parts if not p.get("thought")).strip()
+        return text or None
     except Exception:
         return None
 

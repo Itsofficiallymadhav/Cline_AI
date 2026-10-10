@@ -21,6 +21,7 @@ import streamlit as st  # noqa: E402
 from src import config  # noqa: E402
 from src.ai.utils import fmt_money  # noqa: E402
 from src.channel import flow, store  # noqa: E402
+from src.messages import t  # noqa: E402
 
 APP_NAME = "KaamKaHisab"
 PURPOSE = ("Check delayed MNREGA wages, see an illustrative compensation estimate and prepare a complaint draft "
@@ -129,7 +130,7 @@ if view and view["job_card"]:
         st.caption("Wrong number? Reply **2 / No** to the read-back question, or type the correct number. "
                    "Wrong record data must be corrected by your Gram Panchayat; this app cannot change records.")
         for r in view["results"]:
-            st.write(f"**Status:** {r.status.value.replace('_', ' ')}"
+            st.write(f"**Status:** {t(view['lang'], 'rs_' + r.status.value)}"
                      + (f" · **Delay:** {r.delay_days} days" if r.delay_days else ""))
             if r.compensation is not None:
                 st.metric("Illustrative compensation estimate", f"₹{fmt_money(r.compensation)}")
@@ -138,7 +139,7 @@ if view and view["job_card"]:
                 if r.formula:
                     st.code(f"Formula: {r.formula}", language=None)
             if r.flags:
-                st.info("Needs officer review: " + ", ".join(f.value.replace("_", " ") for f in r.flags)
+                st.info("Needs officer review: " + ", ".join(t(view["lang"], "flag_" + f.value) for f in r.flags)
                         + ". No amount is calculated.")
             st.caption(f"Assumptions (from rules/delay_rules.json): due {r.due_days} days after the muster roll "
                        f"closes; {r.rate_per_day} of the wage per day of delay. {r.disclaimer}"
@@ -176,15 +177,16 @@ except store.StoreError:
 if cases:
     st.divider()
     st.subheader("Your simulated cases")
+    case_lang = view["lang"] if view else None
     for c in reversed(cases):
         with st.container(border=True):
             st.write(f"**{c.case_id}** · job card {c.job_card_no} · ₹{fmt_money(c.compensation)} (estimate) · "
-                     f"status: **{c.status}**")
+                     f"status: **{t(case_lang, 'st_' + c.status)}**")
             st.caption("SIMULATED case for the demo - NOT filed on any government portal. "
                        "Hand the complaint to your Gram Panchayat.")
             try:
                 for ev in store.get_case_history(st.session_state.user_id, c.case_id):
-                    st.caption(f"{ev['at']} - {ev['status']} - {ev['note']}")
+                    st.caption(f"{ev['at']} - {t(case_lang, 'st_' + ev['status'])} - {ev['note']}")
             except store.StoreError:
                 st.caption("Status history unavailable.")
 

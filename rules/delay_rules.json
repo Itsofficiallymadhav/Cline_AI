@@ -1,7 +1,13 @@
 {
   "due_days": 15,
   "rate_per_day": 0.0005,
-  "source": "ILLUSTRATIVE prototype values. Replace with the official MGNREGA rule text/URL.",
+  "source": "ILLUSTRATIVE prototype values (historical MGNREGA-style rate). NOT verified. Replace with the official rule text/URL for the applicable scheme.",
   "last_verified": null,
-  "note": "Set last_verified to a date ONLY after a team member confirms due_days, rate and the day-counting convention against an official worked example."
+  "note": "Set last_verified to a date ONLY after a team member confirms due_days, rate and the day-counting convention against an official worked example. These values must NOT be applied to real claims, including claims under the successor VB-G RAM G framework, until verified.",
+  "scheme": "DEMO_ILLUSTRATIVE",
+  "version": "demo-0",
+  "effective_from": null,
+  "effective_to": null,
+  "delay_start_offset_days": 0,
+  "synthetic_demo": true
 }

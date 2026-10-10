@@ -16,7 +16,8 @@ algorithm/API directly with the existing httpx dependency. Live delivery has NOT
      - duplicate deliveries (same MessageSid) are answered with the stored reply and NOT processed twice
      - text -> handle_message(From, text=Body) -> TwiML reply with reply.render()
      - audio -> empty TwiML at once; a BackgroundTask downloads MediaUrl0 (basic auth sid/token, follows redirects),
-       calls handle_message(audio_bytes=...) and sends the reply with the Twilio REST Messages API
+       calls handle_message(audio_bytes=...) and sends the reply with the Twilio REST Messages API.
+       If GROQ_API_KEY or the Twilio REST credentials are missing, a "please type" reply is sent at once instead.
      - other media (images, documents...) -> polite "please type" reply; nothing is downloaded
 Logging never includes tokens, phone numbers or message text.
 """
@@ -41,10 +42,6 @@ router = APIRouter()
 MAX_LEN = 1500
 MAX_AUDIO_BYTES = 16 * 1024 * 1024               # WhatsApp audio limit
 TWILIO_API = "https://api.twilio.com/2010-04-01"
-_UNSUPPORTED_MEDIA = {
-    "en": "Sorry, I can only read text and voice notes. Please type your message.",
-    "hi": "माफ़ कीजिए, मैं सिर्फ़ लिखा हुआ संदेश और वॉइस नोट समझ सकता हूँ। कृपया अपना संदेश लिखें।",
-}
 
 
 def compute_signature(url: str, params: dict, auth_token: str) -> str:
@@ -89,6 +86,8 @@ def _xml(text: str, status: int = 200) -> Response:
 def _signature_ok(request: Request, params: dict) -> bool:
     token, base = config.TWILIO_AUTH_TOKEN, config.PUBLIC_BASE_URL
     if not (token and base):
+        if token:                                  # half-configured: say so, but keep local/dev behaviour
+            log.warning("TWILIO_AUTH_TOKEN is set but PUBLIC_BASE_URL is empty; signature check skipped")
         return True                                # local/dev mode: verification needs both settings
     url = base.rstrip("/") + request.url.path + (f"?{request.url.query}" if request.url.query else "")
     expected = compute_signature(url, params, token)
@@ -116,6 +115,12 @@ def _send_whatsapp(to: str, text: str) -> None:
         except Exception as e:
             log.error("Twilio send failed: %s", type(e).__name__)      # no number, token or text in logs
             return
+
+
+def _voice_ready() -> bool:
+    """A voice note can only be answered if speech-to-text AND the Twilio REST reply are both configured."""
+    return bool(config.GROQ_API_KEY and config.TWILIO_ACCOUNT_SID and config.TWILIO_AUTH_TOKEN
+                and config.TWILIO_WHATSAPP_FROM)
 
 
 def _process_voice_note(user_id: str, media_url: str) -> None:
@@ -164,11 +169,13 @@ async def whatsapp_webhook(request: Request, background: BackgroundTasks) -> Res
 
     try:
         if num_media > 0 and media_type.startswith("audio/") and not body.strip():
-            background.add_task(_process_voice_note, user_id, params.get("MediaUrl0", ""))
-            text = ""                                           # reply arrives later via the REST API
+            if _voice_ready():
+                background.add_task(_process_voice_note, user_id, params.get("MediaUrl0", ""))
+                text = ""                                       # reply arrives later via the REST API
+            else:                                               # no STT or no REST reply possible: answer now
+                text = t(_lang_of(user_id), "voice_unavailable")
         elif num_media > 0 and not body.strip():
-            lang = _lang_of(user_id)
-            text = _UNSUPPORTED_MEDIA.get(lang or config.DEFAULT_LANG, _UNSUPPORTED_MEDIA["en"])
+            text = t(_lang_of(user_id), "unsupported_media")
         else:
             text = flow.handle_message(user_id, text=body).render()
     except Exception as e:                                      # flow already guards itself; belt and braces

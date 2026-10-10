@@ -35,11 +35,8 @@ _LANG_NAMES = {"hi": "Hindi (Devanagari script)", "en": "English"}
 
 
 def _money(x) -> str:
-    """fmt_money, guarded against exponent notation for very large values (e.g. 1e+06)."""
-    s = fmt_money(x)
-    if "e" in s.lower():
-        s = f"{float(x):.0f}" if float(x).is_integer() else f"{float(x):.2f}"
-    return s
+    """Kept for backward compatibility; fmt_money itself now never uses exponent notation."""
+    return fmt_money(x)
 
 
 def _r2(x) -> float:
