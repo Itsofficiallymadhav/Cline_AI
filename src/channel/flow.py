@@ -115,25 +115,6 @@ def _confirm_opts(lang: Optional[str]) -> list:
     return [["jc:yes", t(lang, "yes")], ["jc:no", t(lang, "no")]]
 
 
-# Two texts that src/messages.py does not have yet (channel files only in this task). TODO: move to messages.py and
-# have a native speaker review the Hindi.
-_LOCAL_TEXT = {
-    "service_error": {
-        "en": "Sorry, something went wrong on our side. Nothing was saved or filed. Please try again.",
-        "hi": "माफ़ कीजिए, हमारी तरफ़ कोई गड़बड़ी हुई। कुछ भी सहेजा या दर्ज नहीं हुआ। कृपया फिर से कोशिश करें।",
-    },
-    "approve_by_typing": {
-        "en": "For your safety, please approve by typing YES or the option number - a voice note cannot approve.",
-        "hi": "आपकी सुरक्षा के लिए, कृपया YES या विकल्प का नंबर लिखकर मंज़ूरी दें - आवाज़ से मंज़ूरी नहीं होती।",
-    },
-}
-
-
-def _local(lang: Optional[str], key: str) -> str:
-    texts = _LOCAL_TEXT[key]
-    return texts.get(lang or config.DEFAULT_LANG) or texts["en"]
-
-
 def _welcome(lang: Optional[str]) -> str:
     if lang:
         return t(lang, "welcome")
@@ -199,8 +180,10 @@ def _calc_view(lang, data):
                            paid=r.payment_date or t(lang, "not_paid"), days=r.delay_days, formula=r.formula))
         else:
             parts.append(t(lang, "no_calc"))
-    if results and results[0].disclaimer:
-        parts.append(results[0].disclaimer)      # engine disclosure, e.g. "Rule values not yet verified."
+    if results and not results[0].rule_verified:
+        parts.append(t(lang, "rule_unverified"))  # engine disclosure, shown in the chat language (messages.py)
+    if results and "synthetic" in results[0].disclaimer.lower():   # the engine's demo-rule note, translated
+        parts.append(t(lang, "demo_rule"))
     data["calc_shown"] = True
     return _out(RESULT, lang, data, "\n\n".join(parts), _result_opts(lang, data))
 
@@ -226,10 +209,10 @@ def _show_draft(lang, data):
 def _approve(user_id, lang, data, from_voice: bool):
     """The ONLY place a case is created: explicit worker approval of the draft they were shown."""
     if from_voice:
-        return _out(DRAFT_REVIEW, lang, data, _local(lang, "approve_by_typing"), _review_opts(lang))
+        return _out(DRAFT_REVIEW, lang, data, t(lang, "approve_by_typing"), _review_opts(lang))
     case_info, draft = data.get("case"), data.get("draft")
     if not case_info or not draft:
-        return _out(NEW, lang, {}, _local(lang, "service_error"))
+        return _out(NEW, lang, {}, t(lang, "service_error"))
     case = store.create_case(user_id, case_info["jc"], draft, case_info["comp"])
     label = t(lang, f"st_{case.status}")
     text = t(lang, "approved", case_id=case.case_id, status=case.status if label == f"st_{case.status}" else label)
@@ -309,7 +292,7 @@ def handle_message(user_id: str, text: Optional[str] = None, audio_bytes: Option
         session = store.get_session(user_id)
     except store.StoreError:
         log.error("session load failed")
-        return _reply(None, _local(None, "service_error"))
+        return _reply(None, t(None, "service_error"))
     state, lang, data = session["state"], session["lang"], session["data"]
 
     from_voice = False
@@ -327,7 +310,7 @@ def handle_message(user_id: str, text: Optional[str] = None, audio_bytes: Option
         new_state, new_lang, new_data, reply = _step(user_id, state, lang, data, raw, from_voice)
     except Exception:                                # adapter / engine / AI / storage failure
         log.exception("conversation step failed in state %s", state)
-        return _reply(lang, _local(lang, "service_error"), data.get("opts", []))   # same options, state kept
+        return _reply(lang, t(lang, "service_error"), data.get("opts", []))   # same options, state kept
 
     try:
         store.save_session(user_id, new_state, new_lang, new_data)
