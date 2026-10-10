@@ -12,7 +12,7 @@ Optional personal details (worker name, village) are shown as "-" when absent - 
 """
 from __future__ import annotations
 
-from src.ai.explain import _money
+from src.ai.utils import fmt_money as _money
 from src.engine.models import CalcResult, Status
 from src.messages import t
 
